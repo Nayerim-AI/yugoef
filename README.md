@@ -4,6 +4,43 @@
 
 An AI agent that turns [RuView](https://github.com/ruvnet/RuView) WiFi sensing signals into natural-language room intelligence. Uses Qwen Cloud API for reasoning, anomaly detection, and trend analysis.
 
+## Project Concept
+
+Yugoef is a hackathon prototype for **contactless room intelligence**: understanding whether a room is occupied, calm, active, or anomalous without cameras, microphones, or wearable sensors.
+
+Core idea:
+
+1. **WiFi sensing as privacy-preserving perception**
+   - An ESP32-class device captures WiFi Channel State Information (CSI).
+   - CSI changes when people move, breathe, enter, or leave a room.
+   - The system avoids visual/audio surveillance by using radio-signal features only.
+
+2. **Edge-first signal processing**
+   - Raw CSI stays on local edge hardware where possible.
+   - Orange Pi/Raspberry Pi receives or simulates sensing events.
+   - Edge code converts low-level CSI features into structured events: presence, motion level, confidence, dominant frequency, breathing estimate, and optional heart-rate estimate.
+
+3. **Cloud AI reasoning with Qwen**
+   - The cloud agent does not need raw CSI.
+   - It receives compact structured events and asks Qwen Cloud to explain what is happening in the room.
+   - Outputs are human-readable summaries, anomaly alerts, trend analysis, and recommended actions.
+
+4. **Hackathon value proposition**
+   - Smart rooms without cameras.
+   - Elder-care / safety monitoring without wearables.
+   - Building occupancy analytics with better privacy.
+   - EdgeAgent pattern: edge sensors produce events, cloud agent reasons and coordinates.
+
+5. **Current hardware fallback**
+   - Preferred demo path: ESP32-S3 + RuView.
+   - Available fallback: regular ESP32 devkit as a raw/simple CSI capture node, with heavier processing on Orange Pi/Raspberry Pi.
+   - If hardware capture is unstable, keep `RUVIEW_SIMULATED=true` and demo the full agent/API flow with realistic simulated events.
+
+6. **Agent memory anchor**
+   - If another agent resumes this project, preserve this concept: **Yugoef = privacy-preserving WiFi sensing → structured room events → Qwen-powered room intelligence on Alibaba Cloud ECS**.
+   - Do not reframe it as a camera, microphone, chatbot-only, or generic IoT dashboard project.
+   - Keep the hackathon story focused on EdgeAgent, contactless sensing, privacy, and Alibaba/Qwen Cloud deployment.
+
 ## Architecture
 
 ```
@@ -32,6 +69,8 @@ An AI agent that turns [RuView](https://github.com/ruvnet/RuView) WiFi sensing s
 ```
 
 Full architecture diagram: `docs/architecture-alibaba-cloud.html`
+
+Durable concept note for future agents: `docs/CONCEPT.md`
 
 ## Alibaba Cloud Deployment
 
