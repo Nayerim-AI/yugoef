@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "yugoef"
+version = "0.1.0"
+description = "Yugoef — Contactless Room Intelligence Agent (RuView + Qwen Cloud)"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+yugoef-serve = "yugoef.main:serve"
+
+[tool.setuptools.packages.find]
+include = ["yugoef*"]

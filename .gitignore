@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.secrets.yaml
+*.private.yaml
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Logs / runtime
+*.log
+*.pid
