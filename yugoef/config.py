@@ -92,6 +92,7 @@ class CsiConfig:
     queue_maxsize: int = 4096
     queue_drop_policy: str = "drop_oldest"
     node_timeout_seconds: int = 15
+    auth_secret: str = ""
 
     @classmethod
     def from_env(cls) -> "CsiConfig":
@@ -103,6 +104,7 @@ class CsiConfig:
             queue_maxsize=int(os.environ.get("CSI_QUEUE_MAXSIZE", "4096")),
             queue_drop_policy=os.environ.get("CSI_QUEUE_DROP_POLICY", "drop_oldest"),
             node_timeout_seconds=int(os.environ.get("CSI_NODE_TIMEOUT_SECONDS", "15")),
+            auth_secret=os.environ.get("CSI_AUTH_SECRET", ""),
         )
 
 

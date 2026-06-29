@@ -14,16 +14,23 @@ menu "Yugoef ESP32 CSI Configuration"
 
     config YUGOEF_UDP_HOST
         string "Yugoef UDP Backend Host"
-        default "100.119.129.28"
+        default "47.236.18.24"
         help
             IPv4 address of the Yugoef backend UDP receiver.
-            Default points to the Alibaba/Tailscale backend. ESP32 must be on a network that can route to this address.
+            Default points to the Alibaba public backend. Use 100.119.129.28 only when the ESP32 network can route to Tailscale.
 
     config YUGOEF_UDP_PORT
         int "Yugoef UDP Backend Port"
         default 5005
         help
             UDP port used by Yugoef CSI ingestion.
+
+    config YUGOEF_NODE_SECRET
+        string "Yugoef node auth secret"
+        default "change-me-yugoef-node-secret"
+        help
+            Pre-shared HMAC secret for UDP CSI packets. Must match backend CSI_AUTH_SECRET.
+            Change before exposing UDP 5005 publicly.
 
     config YUGOEF_NODE_ID
         int "Yugoef numeric node ID"

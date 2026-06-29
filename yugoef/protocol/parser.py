@@ -1,24 +1,27 @@
 from __future__ import annotations
 
+import hmac
 import struct
 import zlib
 
-from .constants import HEADER_LENGTH, MAGIC, MAX_PACKET_SIZE, MessageType, PROTOCOL_VERSION
+from .constants import AUTH_FLAG, AUTH_TAG_LENGTH, HEADER_LENGTH, MAGIC, MAX_PACKET_SIZE, MessageType, PROTOCOL_VERSION
 from .errors import (
+    AuthenticationError,
     CrcMismatchError,
     InvalidMagicError,
     InvalidMessageTypeError,
     InvalidPayloadLengthError,
-    InvalidSubcarrierCountError,
     PacketTooLargeError,
     TruncatedPacketError,
     UnsupportedVersionError,
 )
 from .models import PacketHeader, ParsedPacket
-from .serializer import HEADER_FORMAT, HEADER_WITHOUT_CRC_FORMAT, _validate_header_payload
+from .serializer import HEADER_FORMAT, HEADER_WITHOUT_CRC_FORMAT, _validate_header_payload, auth_tag
 
 
-def parse_packet(data: bytes) -> ParsedPacket:
+def parse_packet(data: bytes, auth_secret: bytes | str | None = None) -> ParsedPacket:
+    if isinstance(auth_secret, str):
+        auth_secret = auth_secret.encode()
     if len(data) > MAX_PACKET_SIZE:
         raise PacketTooLargeError(f"packet length {len(data)} exceeds {MAX_PACKET_SIZE}")
     if len(data) < HEADER_LENGTH:
@@ -67,11 +70,27 @@ def parse_packet(data: bytes) -> ParsedPacket:
     if len(data) != total_length:
         raise InvalidPayloadLengthError(f"packet length {len(data)} does not match expected {total_length}")
 
-    payload = data[HEADER_LENGTH:total_length]
+    wire_payload = data[HEADER_LENGTH:total_length]
     header_without_crc = data[: struct.calcsize(HEADER_WITHOUT_CRC_FORMAT)]
-    computed = zlib.crc32(header_without_crc + payload) & 0xFFFFFFFF
+    computed = zlib.crc32(header_without_crc + wire_payload) & 0xFFFFFFFF
     if computed != crc32:
         raise CrcMismatchError(f"crc mismatch expected 0x{crc32:08x} computed 0x{computed:08x}")
+
+    authenticated = bool(flags & AUTH_FLAG)
+    if auth_secret and not authenticated:
+        raise AuthenticationError("packet authentication required")
+    if authenticated:
+        if len(wire_payload) < AUTH_TAG_LENGTH:
+            raise AuthenticationError("authenticated packet missing tag")
+        payload = wire_payload[:-AUTH_TAG_LENGTH]
+        supplied_tag = wire_payload[-AUTH_TAG_LENGTH:]
+        if not auth_secret:
+            raise AuthenticationError("authenticated packet requires auth_secret")
+        expected_tag = auth_tag(auth_secret, header_without_crc, payload)
+        if not hmac.compare_digest(supplied_tag, expected_tag):
+            raise AuthenticationError("packet authentication failed")
+    else:
+        payload = wire_payload
 
     header = PacketHeader(
         protocol_version=protocol_version,

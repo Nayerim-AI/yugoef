@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import hmac
+import hashlib
 import struct
 import zlib
 
 from .constants import (
+    AUTH_FLAG,
+    AUTH_TAG_LENGTH,
     HEADER_LENGTH,
     MAGIC,
     MAX_ANTENNAS,
@@ -11,7 +15,6 @@ from .constants import (
     MAX_PAYLOAD_LENGTH,
     MAX_SUBCARRIERS,
     MessageType,
-    PROTOCOL_VERSION,
 )
 from .errors import InvalidPayloadLengthError, InvalidSubcarrierCountError, PacketTooLargeError
 from .models import PacketHeader
@@ -61,13 +64,25 @@ def pack_header_without_crc(header: PacketHeader, payload_length: int) -> bytes:
     )
 
 
-def serialize_packet(header: PacketHeader, payload: bytes) -> bytes:
+def auth_tag(secret: bytes, header_without_crc: bytes, payload: bytes) -> bytes:
+    return hmac.new(secret, header_without_crc + payload, hashlib.sha256).digest()[:AUTH_TAG_LENGTH]
+
+
+def serialize_packet(header: PacketHeader, payload: bytes, auth_secret: bytes | str | None = None) -> bytes:
     header.message_type = MessageType(header.message_type)
     _validate_header_payload(header, payload)
-    payload_length = len(payload)
-    header_without_crc = pack_header_without_crc(header, payload_length)
-    crc = zlib.crc32(header_without_crc + payload) & 0xFFFFFFFF
-    packet = header_without_crc + struct.pack(">I", crc) + payload
+    if isinstance(auth_secret, str):
+        auth_secret = auth_secret.encode()
+    wire_payload = payload
+    if auth_secret:
+        header.flags |= AUTH_FLAG
+        header_without_crc = pack_header_without_crc(header, len(payload) + AUTH_TAG_LENGTH)
+        wire_payload = payload + auth_tag(auth_secret, header_without_crc, payload)
+    else:
+        header.flags &= ~AUTH_FLAG
+        header_without_crc = pack_header_without_crc(header, len(payload))
+    crc = zlib.crc32(header_without_crc + wire_payload) & 0xFFFFFFFF
+    packet = header_without_crc + struct.pack(">I", crc) + wire_payload
     if len(packet) > MAX_PACKET_SIZE:
         raise PacketTooLargeError(f"packet length {len(packet)} exceeds {MAX_PACKET_SIZE}")
     return packet

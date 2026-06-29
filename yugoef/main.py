@@ -67,6 +67,7 @@ csi_service = CsiIngestionService(
         queue_maxsize=config.csi.queue_maxsize,
         drop_policy=DropPolicy(config.csi.queue_drop_policy),
         node_timeout_seconds=config.csi.node_timeout_seconds,
+        auth_secret=config.csi.auth_secret,
     )
 )
 csi_udp_server: Optional[CsiUdpServer] = None

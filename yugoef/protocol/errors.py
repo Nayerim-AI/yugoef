@@ -26,6 +26,10 @@ class CrcMismatchError(ProtocolError):
     pass
 
 
+class AuthenticationError(ProtocolError):
+    pass
+
+
 class InvalidMessageTypeError(ProtocolError):
     pass
 

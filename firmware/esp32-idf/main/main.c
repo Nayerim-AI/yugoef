@@ -27,6 +27,7 @@
 #include "esp_netif.h"
 #include "esp_timer.h"
 #include "nvs_flash.h"
+#include "mbedtls/md.h"
 
 #include "lwip/sockets.h"
 #include "lwip/inet.h"
@@ -41,7 +42,9 @@ static const char *TAG = "yugoef-csi";
 #define YUGOEF_VERSION     1
 #define YUGOEF_HEADER_LEN  40
 #define YUGOEF_MAX_PACKET  CONFIG_CSI_MAX_PACKET_SIZE
-#define YUGOEF_MAX_PAYLOAD (YUGOEF_MAX_PACKET - YUGOEF_HEADER_LEN)
+#define YUGOEF_AUTH_FLAG   0x01
+#define YUGOEF_AUTH_TAG_LEN 16
+#define YUGOEF_MAX_PAYLOAD (YUGOEF_MAX_PACKET - YUGOEF_HEADER_LEN - YUGOEF_AUTH_TAG_LEN)
 
 #define MSG_NODE_HELLO 1
 #define MSG_RAW_CSI    2
@@ -82,6 +85,37 @@ static uint32_t crc32_ieee(const uint8_t *data, size_t len)
         }
     }
     return ~crc;
+}
+
+static bool append_auth_tag(uint8_t *packet, uint16_t payload_len)
+{
+    const char *secret = CONFIG_YUGOEF_NODE_SECRET;
+    if (secret == NULL || secret[0] == '\0') {
+        return false;
+    }
+
+    const mbedtls_md_info_t *info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+    if (info == NULL) {
+        return false;
+    }
+
+    uint8_t digest[32];
+    mbedtls_md_context_t ctx;
+    mbedtls_md_init(&ctx);
+    if (mbedtls_md_setup(&ctx, info, 1) != 0) {
+        mbedtls_md_free(&ctx);
+        return false;
+    }
+    if (mbedtls_md_hmac_starts(&ctx, (const unsigned char *)secret, strlen(secret)) != 0 ||
+        mbedtls_md_hmac_update(&ctx, packet, 36) != 0 ||
+        mbedtls_md_hmac_update(&ctx, packet + YUGOEF_HEADER_LEN, payload_len) != 0 ||
+        mbedtls_md_hmac_finish(&ctx, digest) != 0) {
+        mbedtls_md_free(&ctx);
+        return false;
+    }
+    mbedtls_md_free(&ctx);
+    memcpy(packet + YUGOEF_HEADER_LEN + payload_len, digest, YUGOEF_AUTH_TAG_LEN);
+    return true;
 }
 
 static uint32_t uptime_ms(void)
@@ -126,7 +160,9 @@ static size_t build_packet(uint8_t message_type,
                            uint8_t *out,
                            size_t out_len)
 {
-    size_t total_len = YUGOEF_HEADER_LEN + payload_len;
+    bool use_auth = CONFIG_YUGOEF_NODE_SECRET[0] != '\0';
+    uint16_t wire_payload_len = payload_len + (use_auth ? YUGOEF_AUTH_TAG_LEN : 0);
+    size_t total_len = YUGOEF_HEADER_LEN + wire_payload_len;
     if (out_len < total_len || total_len > YUGOEF_MAX_PACKET) {
         return 0;
     }
@@ -136,7 +172,7 @@ static size_t build_packet(uint8_t message_type,
     out[4] = YUGOEF_VERSION;
     out[5] = message_type;
     out[6] = YUGOEF_HEADER_LEN;
-    out[7] = 0; /* flags */
+    out[7] = use_auth ? YUGOEF_AUTH_FLAG : 0; /* flags */
     put_u16_be(out, 8, CONFIG_YUGOEF_NODE_ID);
     put_u16_be(out, 10, CONFIG_YUGOEF_ROOM_ID);
     put_u32_be(out, 12, s_boot_id);
@@ -149,18 +185,21 @@ static size_t build_packet(uint8_t message_type,
     put_u16_be(out, 28, subcarrier_count);
     out[30] = (uint8_t)rssi_dbm;
     out[31] = (uint8_t)noise_floor_dbm;
-    put_u16_be(out, 32, payload_len);
+    put_u16_be(out, 32, wire_payload_len);
     put_u16_be(out, 34, 0); /* reserved */
 
     if (payload_len > 0 && payload != NULL) {
         memcpy(out + YUGOEF_HEADER_LEN, payload, payload_len);
     }
+    if (use_auth && !append_auth_tag(out, payload_len)) {
+        return 0;
+    }
 
     uint32_t crc = crc32_ieee(out, 36);
-    if (payload_len > 0) {
+    if (wire_payload_len > 0) {
         uint32_t payload_crc_seed = crc ^ 0xffffffffU;
-        for (uint16_t i = 0; i < payload_len; i++) {
-            payload_crc_seed ^= payload[i];
+        for (uint16_t i = 0; i < wire_payload_len; i++) {
+            payload_crc_seed ^= out[YUGOEF_HEADER_LEN + i];
             for (int bit = 0; bit < 8; bit++) {
                 uint32_t mask = -(payload_crc_seed & 1U);
                 payload_crc_seed = (payload_crc_seed >> 1) ^ (0xedb88320U & mask);
@@ -174,7 +213,7 @@ static size_t build_packet(uint8_t message_type,
 
 static void send_heartbeat(void)
 {
-    uint8_t packet[YUGOEF_HEADER_LEN];
+    uint8_t packet[YUGOEF_HEADER_LEN + YUGOEF_AUTH_TAG_LEN];
     size_t len = build_packet(MSG_HEARTBEAT,
                               s_heartbeat_sequence++,
                               CONFIG_YUGOEF_WIFI_CHANNEL,
@@ -196,7 +235,7 @@ static void send_heartbeat(void)
 static void send_node_hello(void)
 {
     const char hello[] = "yugoef-esp32-csi-v1";
-    uint8_t packet[YUGOEF_HEADER_LEN + sizeof(hello)];
+    uint8_t packet[YUGOEF_HEADER_LEN + sizeof(hello) + YUGOEF_AUTH_TAG_LEN];
     size_t len = build_packet(MSG_NODE_HELLO,
                               0,
                               CONFIG_YUGOEF_WIFI_CHANNEL,

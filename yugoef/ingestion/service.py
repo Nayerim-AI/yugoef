@@ -23,6 +23,7 @@ class IngestionConfig:
     queue_maxsize: int = 4096
     drop_policy: DropPolicy = DropPolicy.DROP_OLDEST
     node_timeout_seconds: int = 15
+    auth_secret: str = ""
 
 
 @dataclass
@@ -91,7 +92,7 @@ class CsiIngestionService:
             return IngestionResult(False, error="packet_too_large")
 
         try:
-            packet = parse_packet(data)
+            packet = parse_packet(data, auth_secret=self.config.auth_secret or None)
         except CrcMismatchError as exc:
             self.metrics.invalid_packets += 1
             self.metrics.crc_mismatch += 1
