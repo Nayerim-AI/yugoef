@@ -164,7 +164,7 @@ curl -X POST http://localhost:8000/v1/analyze \
 |---------|---------|-------------|
 | `QWEN_API_KEY` | — | Qwen Cloud API key (required) |
 | `QWEN_BASE_URL` | `https://portal.qwen.ai/v1` | API endpoint |
-| `QWEN_MODEL` | `qwen-plus` | Model to use |
+| `QWEN_MODEL` | `qwen3.7-plus` | Model to use |
 | `RUVIEW_SIMULATED` | `true` | Use simulated sensor data |
 | `YUGOEF_HOST` | `0.0.0.0` | Server bind address |
 | `YUGOEF_PORT` | `8000` | Server port |

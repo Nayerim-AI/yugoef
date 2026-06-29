@@ -1,0 +1,40 @@
+menu "Yugoef WiFi Sensing Configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "MyWiFi"
+        help
+            SSID (network name) to connect to.
+
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default "MyPassword"
+        help
+            WiFi password (WPA or WPA2).
+
+    config CLOUD_ENDPOINT_URL
+        string "Cloud Endpoint URL"
+        default "http://192.168.1.100:8000/v1/ingest"
+        help
+            Full URL for the Yugoef cloud ingest endpoint.
+            Example: http://192.168.1.100:8000/v1/ingest
+
+    config DEVICE_ID
+        string "Device ID"
+        default "esp32-devkit-01"
+        help
+            Unique identifier for this ESP32 device.
+
+    config RSSI_SAMPLE_INTERVAL_MS
+        int "RSSI Sample Interval (milliseconds)"
+        default 2000
+        help
+            How often to sample WiFi RSSI in milliseconds.
+
+    config RSSI_WINDOW_SIZE
+        int "RSSI Rolling Window Size"
+        default 10
+        help
+            Number of RSSI samples to keep for variance calculation.
+
+endmenu

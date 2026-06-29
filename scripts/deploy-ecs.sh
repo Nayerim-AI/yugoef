@@ -39,7 +39,7 @@ if [ ! -f .env ]; then
 # !! IMPORTANT: Replace with your actual Qwen Cloud API key !!
 QWEN_API_KEY=your_qwen_cloud_api_key_here
 QWEN_BASE_URL=https://portal.qwen.ai/v1
-QWEN_MODEL=qwen-plus
+QWEN_MODEL=qwen3.7-plus
 
 # Disable simulated mode — RuView sends real events
 RUVIEW_SIMULATED=true

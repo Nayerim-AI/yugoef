@@ -17,7 +17,7 @@ class QwenConfig:
 
     api_key: str = ""
     base_url: str = "https://portal.qwen.ai/v1"
-    model: str = "qwen-plus"  # qwen-plus, qwen-max, qwen-turbo
+    model: str = "qwen3.7-plus"  # qwen3.7-plus, qwen-plus, qwen-max, qwen-turbo
     max_tokens: int = 1024
     temperature: float = 0.3
 
