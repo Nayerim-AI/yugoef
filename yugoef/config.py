@@ -16,7 +16,7 @@ class QwenConfig:
     """Qwen Cloud API configuration."""
 
     api_key: str = ""
-    base_url: str = "https://portal.qwen.ai/v1"
+    base_url: str = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     model: str = "qwen3.7-plus"  # qwen3.7-plus, qwen-plus, qwen-max, qwen-turbo
     max_tokens: int = 1024
     temperature: float = 0.3
