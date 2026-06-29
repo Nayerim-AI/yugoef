@@ -82,12 +82,38 @@ class ServerConfig:
 
 
 @dataclass
+class CsiConfig:
+    """Cloud CSI ingestion configuration."""
+
+    udp_enabled: bool = False
+    udp_host: str = "0.0.0.0"
+    udp_port: int = 5005
+    max_packet_size: int = 1400
+    queue_maxsize: int = 4096
+    queue_drop_policy: str = "drop_oldest"
+    node_timeout_seconds: int = 15
+
+    @classmethod
+    def from_env(cls) -> "CsiConfig":
+        return cls(
+            udp_enabled=os.environ.get("CSI_UDP_ENABLED", "false").lower() == "true",
+            udp_host=os.environ.get("CSI_UDP_HOST", "0.0.0.0"),
+            udp_port=int(os.environ.get("CSI_UDP_PORT", "5005")),
+            max_packet_size=int(os.environ.get("CSI_MAX_PACKET_SIZE", "1400")),
+            queue_maxsize=int(os.environ.get("CSI_QUEUE_MAXSIZE", "4096")),
+            queue_drop_policy=os.environ.get("CSI_QUEUE_DROP_POLICY", "drop_oldest"),
+            node_timeout_seconds=int(os.environ.get("CSI_NODE_TIMEOUT_SECONDS", "15")),
+        )
+
+
+@dataclass
 class AppConfig:
     """Top-level application configuration."""
 
     qwen: QwenConfig = field(default_factory=QwenConfig.from_env)
     ruview: RuViewConfig = field(default_factory=RuViewConfig.from_env)
     server: ServerConfig = field(default_factory=ServerConfig.from_env)
+    csi: CsiConfig = field(default_factory=CsiConfig.from_env)
 
     @classmethod
     def load(cls) -> "AppConfig":

@@ -21,6 +21,7 @@ from pydantic import BaseModel
 
 from .ai_agent import YugoefAgent
 from .config import AppConfig
+from .ingestion import CsiIngestionService, CsiUdpServer, DropPolicy, IngestionConfig, UdpServerConfig
 
 log = logging.getLogger(__name__)
 
@@ -60,14 +61,31 @@ class AnomalyRequest(BaseModel):
 
 config = AppConfig.load()
 agent: Optional[YugoefAgent] = None
+csi_service = CsiIngestionService(
+    IngestionConfig(
+        max_packet_size=config.csi.max_packet_size,
+        queue_maxsize=config.csi.queue_maxsize,
+        drop_policy=DropPolicy(config.csi.queue_drop_policy),
+        node_timeout_seconds=config.csi.node_timeout_seconds,
+    )
+)
+csi_udp_server: Optional[CsiUdpServer] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global agent
+    global agent, csi_udp_server
     agent = YugoefAgent(config)
+    if config.csi.udp_enabled:
+        csi_udp_server = CsiUdpServer(
+            csi_service,
+            UdpServerConfig(host=config.csi.udp_host, port=config.csi.udp_port),
+        )
+        await csi_udp_server.start()
     log.info("Yugoef server started — Qwen model: %s", config.qwen.model)
     yield
+    if csi_udp_server:
+        await csi_udp_server.stop()
     if agent:
         await agent.qwen.close()
     log.info("Yugoef server stopped")
@@ -98,6 +116,13 @@ async def health():
     return {"status": "ok", "model": config.qwen.model}
 
 
+@app.get("/metrics")
+async def metrics():
+    """CSI ingestion metrics."""
+    csi_service.online_nodes
+    return csi_service.metrics.as_dict()
+
+
 @app.get("/v1/status")
 async def status():
     """Agent status."""
@@ -108,6 +133,9 @@ async def status():
         "model": config.qwen.model,
         "simulated": config.ruview.simulated,
         "event_buffer": len(agent.consumer.recent_events),
+        "csi_udp_enabled": config.csi.udp_enabled,
+        "csi_queue_depth": csi_service.metrics.queue_depth,
+        "online_nodes": csi_service.online_nodes,
     }
 
 
