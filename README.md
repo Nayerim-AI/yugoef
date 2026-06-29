@@ -169,6 +169,26 @@ curl -X POST http://localhost:8000/v1/analyze \
 | `YUGOEF_HOST` | `0.0.0.0` | Server bind address |
 | `YUGOEF_PORT` | `8000` | Server port |
 
+## ESP32 Firmware
+
+Tutorial lengkap flash ESP32-IDF untuk WiFi sensing tersedia di:
+
+**→ [docs/ESP32_TUTORIAL.md](docs/ESP32_TUTORIAL.md)**
+
+Firmware project: [`firmware/esp32-idf/`](firmware/esp32-idf/)
+
+Quick start:
+
+```bash
+cd firmware/esp32-idf/
+idf.py menuconfig          # Set WiFi SSID, password, cloud URL
+idf.py set-target esp32
+idf.py build
+idf.py -p /dev/ttyUSB0 flash monitor
+```
+
+---
+
 ## Hackathon Submission
 
 - **Track:** EdgeAgent
