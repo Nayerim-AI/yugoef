@@ -1,4 +1,4 @@
-menu "Yugoef WiFi Sensing Configuration"
+menu "Yugoef ESP32 CSI Configuration"
 
     config WIFI_SSID
         string "WiFi SSID"
@@ -10,31 +10,55 @@ menu "Yugoef WiFi Sensing Configuration"
         string "WiFi Password"
         default "MyPassword"
         help
-            WiFi password (WPA or WPA2).
+            WiFi password (WPA/WPA2).
 
-    config CLOUD_ENDPOINT_URL
-        string "Cloud Endpoint URL"
-        default "http://192.168.1.100:8000/v1/ingest"
+    config YUGOEF_UDP_HOST
+        string "Yugoef UDP Backend Host"
+        default "127.0.0.1"
         help
-            Full URL for the Yugoef cloud ingest endpoint.
-            Example: http://192.168.1.100:8000/v1/ingest
+            IPv4 address of the Yugoef backend UDP receiver.
+            For Alibaba over Tailscale, use the server Tailscale IP.
 
-    config DEVICE_ID
-        string "Device ID"
-        default "esp32-devkit-01"
+    config YUGOEF_UDP_PORT
+        int "Yugoef UDP Backend Port"
+        default 5005
         help
-            Unique identifier for this ESP32 device.
+            UDP port used by Yugoef CSI ingestion.
 
-    config RSSI_SAMPLE_INTERVAL_MS
-        int "RSSI Sample Interval (milliseconds)"
-        default 2000
+    config YUGOEF_NODE_ID
+        int "Yugoef numeric node ID"
+        default 1
+        range 1 65535
         help
-            How often to sample WiFi RSSI in milliseconds.
+            Numeric node ID encoded into the protocol v1 header.
 
-    config RSSI_WINDOW_SIZE
-        int "RSSI Rolling Window Size"
-        default 10
+    config YUGOEF_ROOM_ID
+        int "Yugoef numeric room ID"
+        default 1
+        range 0 65535
         help
-            Number of RSSI samples to keep for variance calculation.
+            Numeric room ID encoded into the protocol v1 header.
+
+    config YUGOEF_WIFI_CHANNEL
+        int "Expected WiFi channel"
+        default 6
+        range 1 14
+        help
+            Channel metadata fallback used for heartbeat and hello packets.
+            RAW_CSI packets use rx_ctrl.channel from ESP-IDF.
+
+    config CSI_MAX_PACKET_SIZE
+        int "CSI max packet size"
+        default 1400
+        range 128 1500
+        help
+            Must match backend CSI_MAX_PACKET_SIZE. Backend default is 1400.
+
+    config HEARTBEAT_INTERVAL_MS
+        int "Heartbeat interval milliseconds"
+        default 5000
+        range 1000 60000
+        help
+            Interval for HEARTBEAT protocol packets.
 
 endmenu
