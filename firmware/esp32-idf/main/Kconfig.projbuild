@@ -14,10 +14,10 @@ menu "Yugoef ESP32 CSI Configuration"
 
     config YUGOEF_UDP_HOST
         string "Yugoef UDP Backend Host"
-        default "127.0.0.1"
+        default "100.119.129.28"
         help
             IPv4 address of the Yugoef backend UDP receiver.
-            For Alibaba over Tailscale, use the server Tailscale IP.
+            Default points to the Alibaba/Tailscale backend. ESP32 must be on a network that can route to this address.
 
     config YUGOEF_UDP_PORT
         int "Yugoef UDP Backend Port"
