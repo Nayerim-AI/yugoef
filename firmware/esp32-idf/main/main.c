@@ -91,8 +91,8 @@ static uint32_t uptime_ms(void)
 
 static uint8_t bandwidth_mhz(void)
 {
-    wifi_bandwidth_t bw = WIFI_BW_HT20;
-    if (esp_wifi_get_bandwidth(WIFI_IF_STA, &bw) == ESP_OK && bw == WIFI_BW_HT40) {
+    wifi_bandwidth_t bw = WIFI_BW20;
+    if (esp_wifi_get_bandwidth(WIFI_IF_STA, &bw) == ESP_OK && bw == WIFI_BW40) {
         return 40;
     }
     return 20;

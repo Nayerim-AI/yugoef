@@ -177,6 +177,9 @@ Tutorial lengkap flash ESP32-IDF untuk WiFi sensing tersedia di:
 
 Firmware project: [`firmware/esp32-idf/`](firmware/esp32-idf/)
 
+Hardware validation and cloud website development handoff:
+[`docs/LOCAL_ESP32_CSI_VALIDATION.md`](docs/LOCAL_ESP32_CSI_VALIDATION.md)
+
 Quick start:
 
 ```bash
