@@ -14,11 +14,14 @@ class IqSample:
 @dataclass(frozen=True)
 class SignalFrame:
     node_id: str
+    room_id: int
     boot_id: int
     channel: int
     antenna_index: int
     sequence: int
     uptime_ms: int
+    rssi_dbm: int
+    noise_floor_dbm: int
     amplitudes: list[float]
     phases: list[float]
 

@@ -37,11 +37,14 @@ class CsiSignalPipeline:
         phases = phase_unwrap([sample.phase for sample in samples])
         frame = SignalFrame(
             node_id=str(header.node_id),
+            room_id=header.room_id,
             boot_id=header.boot_id,
             channel=header.wifi_channel,
             antenna_index=header.antenna_index,
             sequence=header.sequence,
             uptime_ms=header.uptime_ms,
+            rssi_dbm=header.rssi_dbm,
+            noise_floor_dbm=header.noise_floor_dbm,
             amplitudes=[sample.amplitude for sample in samples],
             phases=phases,
         )

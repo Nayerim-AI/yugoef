@@ -107,6 +107,49 @@ class CsiConfig:
 
 
 @dataclass
+class FeatureExtractionConfig:
+    """Deterministic CSI feature extraction configuration."""
+
+    extractor_version: str = "yugoef-feature-v1"
+    motion_amplitude_weight: float = 0.5
+    motion_phase_weight: float = 0.5
+    motion_energy_scale: float = 1.0
+    presence_motion_weight: float = 0.40
+    presence_phase_weight: float = 0.25
+    presence_amplitude_weight: float = 0.20
+    presence_active_subcarrier_weight: float = 0.15
+    presence_enter_threshold: float = 0.60
+    presence_exit_threshold: float = 0.40
+    quality_min_rssi_dbm: int = -85
+    quality_good_rssi_dbm: int = -50
+    quality_min_snr_db: int = 5
+    quality_good_snr_db: int = 30
+    quality_max_packet_loss: float = 0.30
+    quality_target_sample_rate_hz: float = 20.0
+
+    @classmethod
+    def from_env(cls) -> "FeatureExtractionConfig":
+        return cls(
+            extractor_version=os.environ.get("CSI_FEATURE_EXTRACTOR_VERSION", "yugoef-feature-v1"),
+            motion_amplitude_weight=float(os.environ.get("CSI_MOTION_AMPLITUDE_WEIGHT", "0.5")),
+            motion_phase_weight=float(os.environ.get("CSI_MOTION_PHASE_WEIGHT", "0.5")),
+            motion_energy_scale=float(os.environ.get("CSI_MOTION_ENERGY_SCALE", "1.0")),
+            presence_motion_weight=float(os.environ.get("CSI_PRESENCE_MOTION_WEIGHT", "0.40")),
+            presence_phase_weight=float(os.environ.get("CSI_PRESENCE_PHASE_WEIGHT", "0.25")),
+            presence_amplitude_weight=float(os.environ.get("CSI_PRESENCE_AMPLITUDE_WEIGHT", "0.20")),
+            presence_active_subcarrier_weight=float(os.environ.get("CSI_PRESENCE_ACTIVE_SUBCARRIER_WEIGHT", "0.15")),
+            presence_enter_threshold=float(os.environ.get("CSI_PRESENCE_ENTER_THRESHOLD", "0.60")),
+            presence_exit_threshold=float(os.environ.get("CSI_PRESENCE_EXIT_THRESHOLD", "0.40")),
+            quality_min_rssi_dbm=int(os.environ.get("CSI_QUALITY_MIN_RSSI_DBM", "-85")),
+            quality_good_rssi_dbm=int(os.environ.get("CSI_QUALITY_GOOD_RSSI_DBM", "-50")),
+            quality_min_snr_db=int(os.environ.get("CSI_QUALITY_MIN_SNR_DB", "5")),
+            quality_good_snr_db=int(os.environ.get("CSI_QUALITY_GOOD_SNR_DB", "30")),
+            quality_max_packet_loss=float(os.environ.get("CSI_QUALITY_MAX_PACKET_LOSS", "0.30")),
+            quality_target_sample_rate_hz=float(os.environ.get("CSI_QUALITY_TARGET_SAMPLE_RATE_HZ", "20")),
+        )
+
+
+@dataclass
 class AppConfig:
     """Top-level application configuration."""
 
@@ -114,6 +157,7 @@ class AppConfig:
     ruview: RuViewConfig = field(default_factory=RuViewConfig.from_env)
     server: ServerConfig = field(default_factory=ServerConfig.from_env)
     csi: CsiConfig = field(default_factory=CsiConfig.from_env)
+    features: FeatureExtractionConfig = field(default_factory=FeatureExtractionConfig.from_env)
 
     @classmethod
     def load(cls) -> "AppConfig":
